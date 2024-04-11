@@ -3,20 +3,18 @@
 
 #define KEY '5'
 
-void encrypt_psw(char *psw, int len) {
+/*void encrypt_psw(char *psw, int len) {
     for (int i = 0; i != len; i++) {
         psw[i] = psw[i] ^ KEY;
     }
-}
+}*/
 
 int psw_check(char *psw) {
     FILE *stream = fopen("psw.txt", "r");
     char r_psw[100];
     fgets(r_psw, 100, stream);
     fclose(stream);
-
-    encrypt_psw(r_psw, strlen(r_psw));
-
+    /*encrypt_psw(r_psw, strlen(r_psw));*/
     if (strcmp(r_psw, psw) == 0) {
         return 0;
     } else {
