@@ -10,4 +10,7 @@ Laboratory work for University
 
 4. Reveal address that you needed through dumpbin then edit assembly code inside .exe through Hiew (something like test eax eax -> xor eax eax)
 
-5. When you will be testing hacked programm, don't forget to add "password1 > psw.txt" in working directory (where .exe is stored) 
+5. When you will be testing hacked programm, don't forget to add "password1 > psw.txt" in working directory (where .
+exe is stored) 
+
+6. Obfuscator works with "obf_config.cfg" file and accepts code that will be obfuscated through cmd arguments like "./obfuscator check.c"
