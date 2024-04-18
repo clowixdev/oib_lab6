@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-
 #define KEY '5'
 
 /*void encrypt_psw(char *psw, int len) {
@@ -11,7 +10,7 @@
 
 int psw_check(char *psw) {
     FILE *stream = fopen("psw.txt", "r");
-    char r_psw[100];
+    char r_psw[100] = { 0 };
     fgets(r_psw, 100, stream);
     fclose(stream);
     /*encrypt_psw(r_psw, strlen(r_psw));*/

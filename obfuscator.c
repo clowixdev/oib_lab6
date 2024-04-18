@@ -4,18 +4,21 @@
 #include <string.h>
 #include <math.h>
 
-#define BUFF 1000
+#define BUFF 10000
 #define MAX_PLENGHT 100
+#define MAX_NAME_LEN 100
+#define MAX_NAMES_AMT 200
+#define REDEF_NAME_LEN 25
 
 struct config
 {
-    int trash_cycles;
+    int delete_whitespaces;
+    int delete_comments;
+    int change_names;
+    int add_trash;
+
     char trash_cycle[MAX_PLENGHT];
-
-    int trash_vars;
     char trash_var[MAX_PLENGHT];
-
-    int trash_funcs;
     char trash_func[MAX_PLENGHT];
 } cfg;
 
@@ -32,11 +35,90 @@ void copy(char *arr1, char *arr2, int n) {
     }
 }
 
+void reverse(char* str, int str_len) {
+    char* new_str;
+    new_str = (char*) malloc(sizeof(char) * str_len);
+    for (int i = 0; i < str_len; i++) {
+        new_str[i] = str[str_len-1-i]; 
+    }
+
+    copy(str, new_str, str_len);
+    free(new_str);
+}
+
 void display(char *arr) {
     for (int i = 0; arr[i] != 0; i++) {
         printf("%c", arr[i]);
     }
     printf("\n");
+}
+
+char* gen_name(int name_len) {
+    char *name = (char *)malloc(sizeof(char) * name_len);
+    if (name == NULL) {
+        printf("error occured while allocating memory!\n");
+    }
+    clear(name, name_len);
+
+    char alphabet[27] = "abcdefghijklmnopqrstuvwxyz\0";
+
+    int i;
+    for (i = 0; i < name_len; i++) {
+        name[i] = alphabet[rand()%26];
+    }
+    name[i] = '\0';
+    return name;
+}
+
+void format_name(char* name, int name_len) {
+    char *f_name = (char *)malloc(sizeof(char) * name_len);
+    if (f_name == NULL) {
+        printf("error occured while allocating memory!\n");
+    }
+    clear(f_name, name_len);
+
+    int j = 0;
+    for (int i = 0; i < name_len; i++) {
+        if (name[i] == '*') {
+            continue;
+        } else if (name[i] == '[') {
+            break;
+        }
+        f_name[j] = name[i];
+        j++;
+    }
+    f_name[j] = '\0';
+
+    copy(name, f_name, name_len);
+    free(f_name);
+}
+
+int if_on_name(char* code, int pos, char* name) {
+    int len = 0;
+    while (name[len] != '\0') {
+        len++;
+    }
+
+    if (code[pos-1] != ' ' && code[pos-1] != '*' && \
+        code[pos+len] != '+' && code[pos+len] != ' ' && code[pos+len] != '[' && \
+        code[pos-1] != '(' && code[pos+len] != ')') {
+        return false;
+    }
+
+    for (int i = 0; i < len; i++) {
+        if (code[pos++] != name[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void add_new_name(char* code, int pos, char* new_name) {
+    int i = 0;
+    while (i < REDEF_NAME_LEN) {
+        code[pos++] = new_name[i];
+        i++;
+    }
 }
 
 int read_parameter(FILE *stream, char *destination) {
@@ -79,38 +161,154 @@ int read_parameter(FILE *stream, char *destination) {
 void import_config() {
     FILE *config_file = fopen("obf_config.cfg", "r");
 
-    cfg.trash_cycles = read_parameter(config_file, (char *)NULL);
-    cfg.trash_vars = read_parameter(config_file, (char *)NULL);
-    cfg.trash_funcs = read_parameter(config_file, (char *)NULL);
+    cfg.delete_whitespaces = read_parameter(config_file, (char *)NULL);
+    cfg.delete_comments = read_parameter(config_file, (char *)NULL);
+    cfg.change_names = read_parameter(config_file, (char *)NULL);
+    cfg.add_trash = read_parameter(config_file, (char *)NULL);
 
     read_parameter(config_file, cfg.trash_cycle);
     read_parameter(config_file, cfg.trash_var);
     read_parameter(config_file, cfg.trash_func);
 
-    printf("config parameters:\ncfg.trash_cycles=%d\ncfg.trash_vars=%d\ncfg.trash_funcs=%d\ncfg.trash_cycle=%s\ncfg.trash_var=%s\ncfg.trash_func=%s\n\n",\
-            cfg.trash_cycles, cfg.trash_vars, cfg.trash_funcs, cfg.trash_cycle, cfg.trash_var, cfg.trash_func);
+    printf("config parameters:\ncfg.delete_whitespaces=%d\ncfg.delete_comments=%d\ncfg.change_names=%d\ncfg.add_trash=%d\ncfg.trash_cycle=%s\ncfg.trash_var=%s\ncfg.trash_func=%s\n\n",\
+            cfg.delete_whitespaces, cfg.delete_comments, cfg.change_names, cfg.add_trash, cfg.trash_cycle, cfg.trash_var, cfg.trash_func);
 }
 
-void format_string(char *code, char *f_code, int len) {
-    //delete [\t, \n, '  ']
+void delete_comments(char *code, int code_len) {
+    char *obf_code = (char *)malloc(sizeof(char) * code_len);
+    if (obf_code == NULL) {
+        printf("error occured while allocating memory!\n");
+    }
+    clear(obf_code, code_len);
+
     int i, j = 0;
     bool cm = false;
-
-    for (i = 0; i < len; i++) {
-
+    for (i = 0; i < code_len; i++) {
         if (code[i] == '/' && code[i+1] == '*') {
             cm = true;
         } else if (code[i-2] == '*' && code[i-1] == '/') {
             cm = false;
         }
 
-        if ((code[i] == '\t' || code[i] == '\n' || (code[i-1] == ' ' && code[i] == ' ')) || cm == true) {
+        if (cm == true) {
             continue;
         }
-        f_code[j] = code[i];
+
+        obf_code[j] = code[i];
         j++;
     }
-    f_code[j] = '\0';
+    obf_code[j] = '\0';
+
+    copy(code, obf_code, code_len);
+    free(obf_code);
+}
+
+void change_names(char *code, int code_len) {
+    char *obf_code = (char *)malloc(sizeof(char) * code_len);
+    if (obf_code == NULL) {
+        printf("error occured while allocating memory!\n");
+    }
+    clear(obf_code, code_len);
+    
+	char** names_matrix = (char**)malloc(MAX_NAMES_AMT * MAX_NAME_LEN * sizeof(char *));
+	for (int i = 0; i < MAX_NAMES_AMT; i++) {
+		char* name = (char*)malloc(sizeof(char) * MAX_NAME_LEN);
+		clear(name, MAX_NAME_LEN);
+		names_matrix[i] = name;
+	}
+
+    int i = 0, j = 0, k = 0, l = 0;
+    int name_char_i = 0;
+    int i_name = 0;
+    char name[MAX_NAME_LEN] = { 0 };
+    for (i = 0; i < code_len; i++) {
+        if (code[i] == ' ' && code[i+1] == '=' && code[i+2] == ' ') {
+            for (k = i - 1; (code[k] != ' ' && code[k] != '\t' && code[k] != '\n'); k--) {
+                name[name_char_i] = code[k];
+                name_char_i++;
+            }
+            name[name_char_i] = '\0';
+            reverse(name, name_char_i);
+            format_name(name, name_char_i);
+            copy(names_matrix[i_name++], name, name_char_i+1);
+            clear(name, name_char_i);
+            name_char_i = 0;
+        }
+    }
+
+    printf("\n");
+    for (i = 0; i < i_name; i++) {
+        k = 0;
+        char *new_name = gen_name(REDEF_NAME_LEN);
+        printf("generated %s with len = %d instead of %s\n", new_name, REDEF_NAME_LEN, names_matrix[i]);
+        for (j = 0; j < code_len; j++) {
+            if(if_on_name(code, j, names_matrix[i]) == true) {
+                add_new_name(obf_code, k, new_name);
+                k += REDEF_NAME_LEN;
+                j += strlen(names_matrix[i]) - 1;
+                continue;
+            }
+            obf_code[k] = code[j];
+            k++;
+        }
+        free(new_name);
+        copy(code, obf_code, code_len);
+        if (i+1 < i_name) {
+            clear(obf_code, code_len);
+        }
+    }
+    copy(code, obf_code, code_len);
+    printf("\n");
+    // free(obf_code);
+}
+
+void delete_whitespaces(char *code, int code_len) {
+    char *obf_code = (char *)malloc(sizeof(char) * code_len);
+    if (obf_code == NULL) {
+        printf("error occured while allocating memory!\n");
+    }
+    clear(obf_code, code_len);
+
+    //delete double [\t, \n, '  ']
+    int i, j = 0;
+    bool directive = false;
+
+    for (i = 0; i < code_len; i++) {
+
+        if (code[i] == '#') {
+            directive = true;
+        } else if (code[i-1] == '\n') {
+            directive = false;
+        }
+
+        if (((code[i-1] == '\n' && code[i] == '\n') || \
+        (code[i+1] == '\n' && code[i] == '\n') || \
+
+        (code[i-1] == ' ' && code[i] == ' ') || \
+        (code[i+1] == ' ' && code[i] == ' ') || \
+
+        (code[i-1] == '\t' && code[i] == '\t') || \
+        (code[i+1] == '\t' && code[i] == '\t')) && directive == false) {
+            continue;
+        }
+
+        if ((code[i] == '\n' && code[i+1] == ' ') || \
+        (code[i] == '\n' && code[i-1] == ' ') && directive == false) {
+            continue;
+        }
+
+        if ((((code[i-1] == '{' || code[i-1] == '}') || \
+        (code[i+1] == '{' || code[i+1] == '}')) && code[i] == '\n') && directive == false) {
+            continue;
+        }
+
+        obf_code[j] = code[i];
+        j++;
+    }
+    obf_code[j] = '\0';
+    
+    copy(code, obf_code, code_len);
+    free(obf_code);
 }
 
 //function that add some trash in code. 
@@ -141,7 +339,7 @@ int add_trash(char* code, int code_len, int amount, char mode) {
 
         if (mode == 'f') {
             if (brackets_counter == 0 && \
-                i >= (placed_i[times_placed - 1] + code_len / 6) && \
+                i >= (placed_i[times_placed - 1] + code_len / 7) && \
                 times_placed <= amount) {
 
                 placed_i[times_placed] = i;
@@ -153,7 +351,7 @@ int add_trash(char* code, int code_len, int amount, char mode) {
             }
         } else if (mode == 'v' || mode == 'c') {
             if (brackets_counter == 1 && (obf_code[j-1] == '{' || obf_code[j-1] == ';') && \
-                i >= (placed_i[times_placed - 1] + code_len / 12) && \
+                i >= (placed_i[times_placed - 1] + code_len / 13) && \
                 times_placed <= amount) {
 
                 placed_i[times_placed] = i;
@@ -206,9 +404,8 @@ int main(int argc, char *argv[]) {
     }
     printf("%d character were read\n", code_len);
 
-    int actual_size = code_len + (strlen(cfg.trash_cycle) * cfg.trash_cycles + \
-    strlen(cfg.trash_var) * cfg.trash_vars + \
-    strlen(cfg.trash_func) * cfg.trash_funcs);
+    int actual_size = code_len + (strlen(cfg.trash_cycle) + \
+    strlen(cfg.trash_var) + strlen(cfg.trash_func)) + (REDEF_NAME_LEN * MAX_NAMES_AMT);
 
     char *f_code = (char *)malloc(sizeof(char) * actual_size);
     if (f_code == NULL) {
@@ -216,10 +413,30 @@ int main(int argc, char *argv[]) {
     }
     clear(f_code, actual_size);
 
-    format_string(code, f_code, actual_size);
-    printf("%d trash funcs added\n", add_trash(f_code, actual_size, cfg.trash_funcs, 'f'));
-    printf("%d trash vars added\n", add_trash(f_code, actual_size, cfg.trash_vars, 'v'));
-    printf("%d trash cycles added\n", add_trash(f_code, actual_size, cfg.trash_cycles, 'c'));
+    copy(f_code, code, actual_size);
+    int operations_done = 0;
+    if (cfg.delete_comments == 1) {
+        delete_comments(f_code, actual_size);
+        printf("deleted all comments\n");
+        operations_done++;
+    }
+    if (cfg.add_trash == 1) {
+        add_trash(f_code, actual_size, 1, 'f');
+        add_trash(f_code, actual_size, 1, 'v');
+        add_trash(f_code, actual_size, 1, 'c');
+        printf("added all trash\n");
+        operations_done++;
+    }
+    if (cfg.delete_whitespaces == 1) {
+        delete_whitespaces(f_code, actual_size);
+        printf("deleted all whitespaces\n");
+        operations_done++;
+    }
+    if (cfg.change_names == 1) {
+        change_names(f_code, actual_size);
+        printf("changed all names\n");
+        operations_done++;
+    }
 
     FILE *output_stream = fopen("obfuscated_code.txt", "w");
 

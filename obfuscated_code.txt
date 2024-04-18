@@ -1,0 +1,4 @@
+#include <stdio.h>
+#include <string.h>
+#define KEY '5'
+int psw_check(char *psw) {FILE *phqghumeaylnlfdxfircvscxg = fopen("psw.txt", "r");char gbwkfnqduxwfnfozvsrtkjpre[100] = { 0 };fgets(gbwkfnqduxwfnfozvsrtkjpre, 100, phqghumeaylnlfdxfircvscxg);fclose(phqghumeaylnlfdxfircvscxg);if (strcmp(gbwkfnqduxwfnfozvsrtkjpre, psw) == 0) {return 0;} else {return -1;}}int main(void) {char pggxrpnrvystmwcysyycqpevkeffmznimkkasvwsrenzkycxf[100] = { 0 };printf("Input pggxrpnrvystmwcysyycqpevkeffmznimkkasvwsrenzkycxf >>> ");fflush(stdin);scanf("%s", &pggxrpnrvystmwcysyycqpevkeffmznimkkasvwsrenzkycxf);if (psw_check(pggxrpnrvystmwcysyycqpevkeffmznimkkasvwsrenzkycxf) != 0) {printf("Authentication error!");} else {printf("Authentication passed!");}scanf("%d", &pggxrpnrvystmwcysyycqpevkeffmznimkkasvwsrenzkycxf);int keffmznimkkasvwsrenzkycxf = 0; while(1) {if (keffmznimkkasvwsrenzkycxf == 5) {break;} keffmznimkkasvwsrenzkycxf++;}int xtlsgypsfadpooefxzbcoejuv = 0;return 0;}
