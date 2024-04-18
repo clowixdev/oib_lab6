@@ -259,6 +259,10 @@ void change_names(char *code, int code_len) {
     }
     copy(code, obf_code, code_len);
     printf("\n");
+    for (i = 0; i < i_name; i++) {
+        free(names_matrix[i]);
+    }
+    free(names_matrix);
     // free(obf_code);
 }
 
