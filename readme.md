@@ -1,4 +1,6 @@
-Laboratory work for University
+# Laboratory work for University
+
+### Dissassembling and obfuscating
 
 1. Compile only through visual studio project (idk why, but otherwise there so many extra sections and probably, when you build your project through vscode, there is defence from disassembling)
 
