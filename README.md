@@ -25,4 +25,4 @@ General steps to get all that you need
 
    		./obfuscator check.c
 
-###ACCEPTED!
+### ACCEPTED!
