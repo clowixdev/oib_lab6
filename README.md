@@ -24,3 +24,5 @@ General steps to get all that you need
 5. Obfuscator works with "obf_config.cfg" file and accepts code that will be obfuscated through cmd arguments like
 
    		./obfuscator check.c
+
+###ACCEPTED!
